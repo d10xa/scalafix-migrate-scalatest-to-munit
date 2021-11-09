@@ -1,0 +1,4 @@
+/*
+rule = ScalafixMigrateScalatestToMunit
+*/
+package fix
