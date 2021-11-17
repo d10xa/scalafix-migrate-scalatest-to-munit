@@ -76,16 +76,10 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
   def findRedundandWhitespaceAround(tokens: List[Token])(implicit doc: SemanticDocument): Option[Token] =
     tokens match {
       case Nil => None
-      case head :: Nil =>
+      case list =>
         for {
-          leadingToken <- doc.tokenList.leading(head).headOption
-          trailingToken <- doc.tokenList.trailing(head).headOption
-          if isWhitespaceAllAround(leadingToken, trailingToken)
-        } yield trailingToken
-      case head :: next =>
-        for {
-          leadingToken <- doc.tokenList.leading(head).headOption
-          trailingToken <- doc.tokenList.trailing(next.last).headOption
+          leadingToken <- doc.tokenList.leading(list.head).headOption
+          trailingToken <- doc.tokenList.trailing(list.last).headOption
           if isWhitespaceAllAround(leadingToken, trailingToken)
         } yield trailingToken
     }
