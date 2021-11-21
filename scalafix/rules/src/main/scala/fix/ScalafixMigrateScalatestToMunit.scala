@@ -10,11 +10,13 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
 
   val ScalatestAnyFunSuiteLike_S: Symbol = Symbol("org/scalatest/funsuite/AnyFunSuiteLike#")
   val ScalatestBeforeAndAfterAll_S: Symbol = Symbol("org/scalatest/BeforeAndAfterAll#")
+  val ScalatestShouldMatchers_S: Symbol = Symbol("org/scalatest/matchers/should/Matchers#")
   val MunitFunSuite_S: Symbol = Symbol("munit/FunSuite#")
 
   val replaces: Map[Symbol, Option[Symbol]] = Map(
     ScalatestAnyFunSuiteLike_S -> Some(MunitFunSuite_S),
-    ScalatestBeforeAndAfterAll_S -> None
+    ScalatestBeforeAndAfterAll_S -> None,
+    ScalatestShouldMatchers_S -> None
   )
 
   override def fix(implicit doc: SemanticDocument): Patch = {
