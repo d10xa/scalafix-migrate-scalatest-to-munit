@@ -4,4 +4,4 @@ import munit.FunSuite
 
 abstract class AnyFunSuiteLikeWithMatchers
   extends FunSuite
-    with Matchers {}
+     {}

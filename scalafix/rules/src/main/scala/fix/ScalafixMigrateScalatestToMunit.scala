@@ -13,6 +13,11 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
   val ScalatestShouldMatchers_S: Symbol = Symbol("org/scalatest/matchers/should/Matchers#")
   val MunitFunSuite_S: Symbol = Symbol("munit/FunSuite#")
 
+  val ShouldEqual_M: SymbolMatcher = SymbolMatcher.exact("org/scalatest/matchers/should/Matchers#AnyShouldWrapper#shouldEqual().")
+  val ShouldBe_M: SymbolMatcher = SymbolMatcher.exact("org/scalatest/matchers/should/Matchers#AnyShouldWrapper#shouldBe().")
+
+  val AssertEqualsCompose_M: SymbolMatcher = ShouldEqual_M + ShouldBe_M
+
   val replaces: Map[Symbol, Option[Symbol]] = Map(
     ScalatestAnyFunSuiteLike_S -> Some(MunitFunSuite_S),
     ScalatestBeforeAndAfterAll_S -> None,
@@ -26,12 +31,12 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
           case Some(value) => removeWithRedundantSpace(value.tokens.toList)
           case None => Patch.empty
         }
-      case t@Term.ApplyInfix(leftTerm, Term.Name("shouldEqual"), List(), List(rightTerm)) =>
+      case AssertEqualsApplyOrApplyInfix(tree, leftTerm, rightTerms) =>
         val newTree = Term.Apply(
           Term.Name("assertEquals"),
-          List(leftTerm, rightTerm)
+          leftTerm +: rightTerms
         )
-        Patch.replaceTree(t, newTree.toString())
+        Patch.replaceTree(tree, newTree.toString())
       case Template(_, inits, _, _) if inits.nonEmpty =>
         val initsWithReplaces = inits.map(i => (i, replaces.get(i.symbol)))
         val needRemoveExtends = initsWithReplaces.forall {
@@ -72,10 +77,18 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
     }.asPatch
   }
 
+  object AssertEqualsApplyOrApplyInfix {
+    def unapply(t: Term)(implicit doc: SemanticDocument): Option[(Term, Term, List[Term])] = t match {
+      case t @ Term.ApplyInfix(leftTerm, AssertEqualsCompose_M(_), List(), rightTerms) => Some((t, leftTerm, rightTerms))
+      case t @ Term.Apply(Term.Select(leftTerm, AssertEqualsCompose_M(_)), rightTerms) => Some((t, leftTerm, rightTerms))
+      case _ => None
+    }
+  }
+
   def isWhitespaceAllAround(startToken: Token, endToken: Token): Boolean =
     startToken.is[Whitespace] && endToken.is[Whitespace]
 
-  def findRedundandWhitespaceAround(tokens: List[Token])(implicit doc: SemanticDocument): Option[Token] =
+  def findRedundantWhitespaceAround(tokens: List[Token])(implicit doc: SemanticDocument): Option[Token] =
     tokens match {
       case Nil => None
       case list =>
@@ -87,7 +100,7 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
     }
 
   def removeWithRedundantSpace(tokens: List[Token])(implicit doc: SemanticDocument): Patch = {
-    val r = findRedundandWhitespaceAround(tokens).toList
+    val r = findRedundantWhitespaceAround(tokens).toList
     Patch.removeTokens(tokens ++ r)
   }
   
