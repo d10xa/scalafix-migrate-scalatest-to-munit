@@ -2,6 +2,7 @@ package fix
 
 import scalafix.v1._
 
+import scala.meta.Term.ApplyInfix
 import scala.meta._
 import scala.meta.tokens.Token
 import scala.meta.contrib.Whitespace
@@ -35,6 +36,12 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
         val newTree = Term.Apply(
           Term.Name("assertEquals"),
           leftTerm +: rightTerms
+        )
+        Patch.replaceTree(tree, newTree.toString())
+      case tree @ ShouldBeEmptyUnapply(term) =>
+        val newTree = Term.Apply(
+          Term.Name("assertEquals"),
+          Term.Select(term, Term.Name("isEmpty")) +: List(Lit.Boolean(true))
         )
         Patch.replaceTree(tree, newTree.toString())
       case Template(_, inits, _, _) if inits.nonEmpty =>
@@ -81,6 +88,14 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
     def unapply(t: Term)(implicit doc: SemanticDocument): Option[(Term, Term, List[Term])] = t match {
       case t @ Term.ApplyInfix(leftTerm, AssertEqualsCompose_M(_), List(), rightTerms) => Some((t, leftTerm, rightTerms))
       case t @ Term.Apply(Term.Select(leftTerm, AssertEqualsCompose_M(_)), rightTerms) => Some((t, leftTerm, rightTerms))
+      case _ => None
+    }
+  }
+
+  object ShouldBeEmptyUnapply {
+    def unapply(t: Term)(implicit doc: SemanticDocument): Option[Term] = t match {
+      case ApplyInfix(term, Term.Name("should"), Nil, List(Term.Apply(Term.Name("be"), List(Term.Name("empty"))))) =>
+        Some(term)
       case _ => None
     }
   }

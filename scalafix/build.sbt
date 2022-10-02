@@ -1,7 +1,7 @@
 lazy val V = _root_.scalafix.sbt.BuildInfo
 
-lazy val rulesCrossVersions = Seq(V.scala213, V.scala212, V.scala211)
-lazy val scala3Version = "3.0.1"
+lazy val rulesCrossVersions = Seq(V.scala213)
+lazy val scala3Version = "3.2.0"
 lazy val testFrameworkDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.2.10",
   "org.scalameta" %% "munit" % "0.7.29"
@@ -87,25 +87,25 @@ lazy val tests = projectMatrix
   .defaultAxes(
     rulesCrossVersions.map(VirtualAxis.scalaABIVersion) :+ VirtualAxis.jvm: _*
   )
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(TargetAxis(scala3Version), VirtualAxis.jvm),
-    settings = Seq()
-  )
+//  .customRow(
+//    scalaVersions = Seq(V.scala212),
+//    axisValues = Seq(TargetAxis(scala3Version), VirtualAxis.jvm),
+//    settings = Seq()
+//  )
   .customRow(
     scalaVersions = Seq(V.scala213),
     axisValues = Seq(TargetAxis(V.scala213), VirtualAxis.jvm),
     settings = Seq()
   )
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(TargetAxis(V.scala212), VirtualAxis.jvm),
-    settings = Seq()
-  )
-  .customRow(
-    scalaVersions = Seq(V.scala211),
-    axisValues = Seq(TargetAxis(V.scala211), VirtualAxis.jvm),
-    settings = Seq()
-  )
+//  .customRow(
+//    scalaVersions = Seq(V.scala212),
+//    axisValues = Seq(TargetAxis(V.scala212), VirtualAxis.jvm),
+//    settings = Seq()
+//  )
+//  .customRow(
+//    scalaVersions = Seq(V.scala211),
+//    axisValues = Seq(TargetAxis(V.scala211), VirtualAxis.jvm),
+//    settings = Seq()
+//  )
   .dependsOn(rules)
   .enablePlugins(ScalafixTestkitPlugin)
