@@ -3,7 +3,7 @@ package fix
 import scalafix.v1._
 
 import scala.meta.Term.ApplyInfix
-import scala.meta._
+import scala.meta.{Term, _}
 import scala.meta.tokens.Token
 import scala.meta.contrib.Whitespace
 
@@ -40,8 +40,17 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
         Patch.replaceTree(tree, newTree.toString())
       case tree @ ShouldBeEmptyUnapply(term) =>
         val newTree = Term.Apply(
-          Term.Name("assertEquals"),
-          Term.Select(term, Term.Name("isEmpty")) +: List(Lit.Boolean(true))
+          Term.Name("assert"),
+          List(Term.Select(term, Term.Name("isEmpty")))
+        )
+        Patch.replaceTree(tree, newTree.toString())
+      case tree@ShouldStartWithUnapply((term1, term2)) =>
+        val newTree = Term.Apply(
+          Term.Name("assert"),
+          List(Term.Apply(
+            Term.Select(term1, Term.Name("startsWith")),
+            List(term2)
+          ))
         )
         Patch.replaceTree(tree, newTree.toString())
       case Template(_, inits, _, _) if inits.nonEmpty =>
@@ -100,6 +109,13 @@ class ScalafixMigrateScalatestToMunit extends SemanticRule("ScalafixMigrateScala
     }
   }
 
+  object ShouldStartWithUnapply {
+    def unapply(t: Term)(implicit doc: SemanticDocument): Option[(Term, Term)] = t match {
+      case ApplyInfix(term, Term.Name("should"), Nil, List(Term.Apply(Term.Name("startWith"), List(term2)))) =>
+        Some(term, term2)
+      case _ => None
+    }
+  }
   def isWhitespaceAllAround(startToken: Token, endToken: Token): Boolean =
     startToken.is[Whitespace] && endToken.is[Whitespace]
 
